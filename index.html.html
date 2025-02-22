@@ -3,87 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stative Verbs Drag-and-Drop Game</title>
+    <title>Stative Verbs Game</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        .sentence {
-            margin: 20px;
-            font-size: 18px;
-        }
-        .dropzone {
-            display: inline-block;
-            width: 150px;
-            height: 30px;
-            margin: 5px;
-            border: 2px dashed #333;
-            vertical-align: middle;
-            line-height: 30px;
-        }
-        .word {
-            display: inline-block;
-            padding: 5px 10px;
-            margin: 5px;
-            background-color: #ddd;
-            border-radius: 5px;
-            cursor: grab;
-        }
-        .correct {
-            background-color: lightgreen;
-        }
-        .wrong {
-            background-color: lightcoral;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .container { max-width: 600px; margin: auto; border: 1px solid #ccc; padding: 20px; border-radius: 10px; }
+        .question { font-size: 18px; margin-bottom: 15px; }
+        .options button { display: block; margin: 5px auto; padding: 10px; cursor: pointer; }
+        .input-container { margin-top: 10px; }
+        .input-container input { padding: 10px; width: 80%; margin-right: 5px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <h1>Drag and Drop: Stative Verbs</h1>
-    <p>Drag the correct verb into the blank space.</p>
-    
-    <div class="sentence">I <span class="dropzone" data-correct="know"></span> the answer to this quiz.</div>
-    <div class="sentence">She <span class="dropzone" data-correct="loves"></span> performing on stage.</div>
-    <div class="sentence">Right now, we <span class="dropzone" data-correct="are having"></span> a great time at the final race!</div>
-    <div class="sentence">The judge <span class="dropzone" data-correct="believes"></span> that the player made a huge effort.</div>
-    <div class="sentence">He <span class="dropzone" data-correct="is seeing"></span> a professional coach for training this week.</div>
-    
-    <div id="words">
-        <span class="word" draggable="true">know</span>
-        <span class="word" draggable="true">loves</span>
-        <span class="word" draggable="true">are having</span>
-        <span class="word" draggable="true">believes</span>
-        <span class="word" draggable="true">is seeing</span>
+    <div class="container">
+        <h1>Stative Verbs Game</h1>
+        <div id="game">
+            <p class="question" id="questionText"></p>
+            <div class="options" id="optionsContainer"></div>
+            <div class="input-container hidden" id="inputContainer">
+                <input type="text" id="userInput" placeholder="Type your answer here">
+                <button onclick="submitAnswer()">Submit</button>
+            </div>
+            <p id="score">Score: 0</p>
+        </div>
+        <p id="gameOver" class="hidden">🎉 Game Over! Your final score: <span id="finalScore"></span></p>
     </div>
-    
     <script>
-        const words = document.querySelectorAll(".word");
-        const dropzones = document.querySelectorAll(".dropzone");
+        const questions = [
+            { question: "I know the answer to this quiz.", options: ["S", "A"], answer: "S" },
+            { question: "She spoke to the judge during the competition.", options: ["S", "A"], answer: "A" },
+            { question: "He took his chance and became a champion.", options: ["S", "A"], answer: "A" },
+            { question: "They met the key player after the race.", options: ["S", "A"], answer: "A" },
+            { question: "I think this project is a great opportunity.", options: ["S", "A"], answer: "S" },
+            { question: "She thought about her success in the past.", options: ["S", "A"], answer: "A" },
+            { question: "We see the stage from here.", options: ["S", "A"], answer: "S" },
+            { question: "She is seeing a professional coach for training.", options: ["S", "A"], answer: "A" },
+            { question: "This puzzle appears to be difficult.", options: ["S", "A"], answer: "S" },
+            { question: "He is appearing in a musical event.", options: ["S", "A"], answer: "A" },
+            { question: "Rewrite: She is knowing all the answers to the quiz.", answer: "She knows all the answers to the quiz." },
+            { question: "Rewrite: The player is appearing on stage now.", answer: "The player appears on stage now." }
+        ];
 
-        words.forEach(word => {
-            word.addEventListener("dragstart", (e) => {
-                e.dataTransfer.setData("text", e.target.innerText);
-            });
-        });
+        let currentQuestion = 0;
+        let score = 0;
 
-        dropzones.forEach(dropzone => {
-            dropzone.addEventListener("dragover", (e) => {
-                e.preventDefault();
-            });
+        function displayQuestion() {
+            if (currentQuestion >= questions.length) {
+                document.getElementById("game").classList.add("hidden");
+                document.getElementById("gameOver").classList.remove("hidden");
+                document.getElementById("finalScore").textContent = score;
+                return;
+            }
+            
+            const questionData = questions[currentQuestion];
+            document.getElementById("questionText").textContent = questionData.question;
+            const optionsContainer = document.getElementById("optionsContainer");
+            optionsContainer.innerHTML = "";
+            
+            if (questionData.options) {
+                questionData.options.forEach(option => {
+                    const button = document.createElement("button");
+                    button.textContent = option;
+                    button.onclick = () => checkAnswer(option);
+                    optionsContainer.appendChild(button);
+                });
+                document.getElementById("inputContainer").classList.add("hidden");
+            } else {
+                document.getElementById("inputContainer").classList.remove("hidden");
+            }
+        }
 
-            dropzone.addEventListener("drop", (e) => {
-                e.preventDefault();
-                let droppedWord = e.dataTransfer.getData("text");
-                
-                if (droppedWord === dropzone.getAttribute("data-correct")) {
-                    dropzone.innerText = droppedWord;
-                    dropzone.classList.add("correct");
-                } else {
-                    dropzone.innerText = droppedWord;
-                    dropzone.classList.add("wrong");
-                }
-            });
-        });
+        function checkAnswer(answer) {
+            if (answer === questions[currentQuestion].answer) {
+                score++;
+            }
+            document.getElementById("score").textContent = "Score: " + score;
+            currentQuestion++;
+            displayQuestion();
+        }
+
+        function submitAnswer() {
+            const userInput = document.getElementById("userInput").value.trim();
+            checkAnswer(userInput);
+            document.getElementById("userInput").value = "";
+        }
+
+        displayQuestion();
     </script>
 </body>
 </html>
